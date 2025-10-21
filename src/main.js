@@ -14,13 +14,6 @@ import { initSorting } from './components/sorting.js';
 import { initFiltering } from './components/filtering.js';
 import { initSearching } from './components/searching.js';
 
-
-// let applySorting = (data, state, action) => data;
-// let applyPagination = (data, state, action) => data;
-// let applyFiltering = (data, state, action) => data;
-// let applySearching = (data, state, action) => data;
-
-
 // Исходные данные используемые в render()
 const api = initData(sourceData);
 
@@ -46,14 +39,15 @@ function collectState() {
  */
 async function render(action) {
     let state = collectState(); // состояние полей из таблицы
-    let query = {}; // копируем для последующего изменения
+    let query = {};
+
     // @todo: использование
     // Pipeline: filtering -> searching -> sorting -> pagination
 
-        query = applyFiltering(query, state, action);
-        query = applySearching(query, state, action);
-        query = applySorting(query, state, action); 
-        query = applyPagination(query, state, action);
+    query = applyFiltering(query, state, action);
+    query = applySearching(query, state, action);
+    query = applySorting(query, state, action); 
+    query = applyPagination(query, state, action);
 
     const { total, items } = await api.getRecords(query);
 
@@ -82,14 +76,14 @@ const sampleTable = initTable({
     }
 );
 
-    const applySorting = initSorting([        // Нам нужно передать сюда массив элементов, которые вызывают сортировку, чтобы изменять их визуальное представление
-        sampleTable.header.elements.sortByDate,
-        sampleTable.header.elements.sortByTotal
-    ]);
+const applySorting = initSorting([        // Нам нужно передать сюда массив элементов, которые вызывают сортировку, чтобы изменять их визуальное представление
+    sampleTable.header.elements.sortByDate,
+    sampleTable.header.elements.sortByTotal
+]);
 
-    const {applyFiltering, updateIndexes} = initFiltering(sampleTable.filter.elements);
+const {applyFiltering, updateIndexes} = initFiltering(sampleTable.filter.elements);
 
-    const applySearching = initSearching(sampleTable.search.element);
+const applySearching = initSearching(search);
 
 const appRoot = document.querySelector('#app');
 appRoot.appendChild(sampleTable.container);
