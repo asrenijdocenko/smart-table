@@ -1,46 +1,97 @@
-import {createComparison, defaultRules} from "../lib/compare.js";
+
 
 // @todo: #4.3 — настроить компаратор
-const compare = createComparison(defaultRules); 
-export function initFiltering(elements, indexes) {
-    // @todo: #4.1 — заполнить выпадающие списки опциями
-    Object.keys(indexes).forEach(key => {
-  const element = elements[key];
-  if (!element) return;
+// const compare = createComparison(defaultRules); 
+// export function initFiltering(elements, indexes) {
+//     // @todo: #4.1 — заполнить выпадающие списки опциями
+//     Object.keys(indexes).forEach(key => {
+//   const element = elements[key];
+//   if (!element) return;
 
-  const emptyOption = document.createElement('option');
-  emptyOption.value = '';
-  emptyOption.textContent = '';
-  element.append(emptyOption);
+//   const emptyOption = document.createElement('option');
+//   emptyOption.value = '';
+//   emptyOption.textContent = '';
+//   element.append(emptyOption);
 
-  Object.values(indexes[key]).forEach(value => {
-    const option = document.createElement('option');
-    option.value = value;
-    option.textContent = value;
-    element.append(option);
-  });
-});
-    return (data, state, action) => {
-        // @todo: #4.2 — обработать очистку поля
-if (action && action.name === 'clear') {
-  const fieldToClear = action.dataset.field; // какое поле очищаем
+//   Object.values(indexes[key]).forEach(value => {
+//     const option = document.createElement('option');
+//     option.value = value;
+//     option.textContent = value;
+//     element.append(option);
+//   });
+// });
+//     return (data, state, action) => {
+//         // @todo: #4.2 — обработать очистку поля
+// if (action && action.name === 'clear') {
+//   const fieldToClear = action.dataset.field; // какое поле очищаем
 
-  if (fieldToClear && elements[fieldToClear]) {
-    const el = elements[fieldToClear];
+//   if (fieldToClear && elements[fieldToClear]) {
+//     const el = elements[fieldToClear];
 
-    // очищаем элемент фильтра
-    if (el.tagName.toLowerCase() === 'select') {
-      el.value = '';
-    } else if ('value' in el) {
-      el.value = '';
+//     // очищаем элемент фильтра
+//     if (el.tagName.toLowerCase() === 'select') {
+//       el.value = '';
+//     } else if ('value' in el) {
+//       el.value = '';
+//     }
+
+//     // сбрасываем значение в state (если он есть)
+//     state[fieldToClear] = '';
+//   }
+// }
+
+//         // @todo: #4.5 — отфильтровать данные используя компаратор
+//         return data.filter(row => compare(row, state));
+//     }
+// }
+
+export function initFiltering(elements) {
+    const updateIndexes = (elements, indexes) => {
+        Object.keys(indexes).forEach((elementName) => {
+            elements[elementName].append(...Object.values(indexes[elementName]).map(name => {
+                const el = document.createElement('option');
+                el.textContent = name;
+                el.value = name;
+                return el;
+            }))
+        })
     }
 
-    // сбрасываем значение в state (если он есть)
-    state[fieldToClear] = '';
-  }
-}
+    const applyFiltering = (query, state, action) => {
+        // код с обработкой очистки поля
+    if (action && action.name === 'clear') {
+      const fieldToClear = action.dataset.field; // какое поле очищаем
 
-        // @todo: #4.5 — отфильтровать данные используя компаратор
-        return data.filter(row => compare(row, state));
+       if (fieldToClear && elements[fieldToClear]) {
+          const el = elements[fieldToClear];
+
+          // очищаем элемент фильтра
+          if (el.tagName.toLowerCase() === 'select') {
+            el.value = '';
+          } else if ('value' in el) {
+            el.value = '';
+         }
+
+          // сбрасываем значение в state (если он есть)
+          state[fieldToClear] = '';
+        }
+    }
+
+        // @todo: #4.5 — отфильтровать данные, используя компаратор
+        const filter = {};
+        Object.keys(elements).forEach(key => {
+            if (elements[key]) {
+                if (['INPUT', 'SELECT'].includes(elements[key].tagName) && elements[key].value) { // ищем поля ввода в фильтре с непустыми данными
+                    filter[`filter[${elements[key].name}]`] = elements[key].value; // чтобы сформировать в query вложенный объект фильтра
+                }
+            }
+        })
+
+        return Object.keys(filter).length ? Object.assign({}, query, filter) : query; // если в фильтре что-то добавилось, применим к запросу
+    }
+
+    return {
+        updateIndexes,
+        applyFiltering
     }
 }
